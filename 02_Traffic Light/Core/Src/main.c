@@ -42,9 +42,8 @@
 
 /* USER CODE BEGIN PV */
 
-uint64_t frequency = 168000000; //Hz
-int red = 2;
-int green = 0;
+int red = 14;
+int green = 12; // 12 for F407  // 13 for F429
 
 /* USER CODE END PV */
 
@@ -55,25 +54,13 @@ static void MX_GPIO_Init(void);
 
 // Eliminate button rattling (optional)
 int MyReadButton() {
-	int sum = 0;
-	for (int i = 0; i < 5000; i++)
-		sum += GPIOA->IDR & 0x1; // PA0
-	return sum > 4000;
+	return GPIOA->IDR & 0x1;
 }
 
 // Control LED
-void MyWriteLed(int num, int sign) { // num : 0..3
-	if (sign) // Write 1
-		GPIOD->ODR |= 1 << (num + 12); // LEDs start at pin 12
-	else
-		// Write 0
-		GPIOD->ODR &= ~(1 << (num + 12));
-}
-
-void delay(uint32_t ms) {
-	uint64_t jmax = frequency / 21 - 1;
-	for (uint32_t i = 0; i < ms; ++i)
-		for (uint64_t j = 0; j < jmax; ++j);
+void MyWriteLed(int pin_num, int sign)
+{
+	GPIOG->BSRR |= sign ? (1 << pin_num) : (1 << (pin_num + 16));
 }
 
 /* USER CODE END PFP */
@@ -90,8 +77,10 @@ void delay(uint32_t ms) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	RCC->AHB1ENR |= (1 << 3) + 1; // GPIOA and GPIOD clocking
-	GPIOD->MODER |= (1 << (2 * 15)) + (1 << (2 * 14)) + (1 << (2 * 13)) + (1 << (2 * 12)); // PD12, PD13, PD14, PD15
+	RCC->AHB1ENR |= (1 << 3) + 1; // GPIOA and GPIOD (3) clocking  //  GPIOA and GPIOG (6) for F429
+	GPIOA->MODER &= ~3; // PA0 to 00
+	GPIOD->MODER &= ~( (1 << (2 * 14 + 1)) + (1 << (2 * 12 + 1)) ); // PD12, PD14 to 0_ for F407 // PG13, PG14 for F429
+	GPIOD->MODER |= (1 << (2 * 14)) + (1 << (2 * 12)); // PD12, PD14 to 01 for F407 // PG13, PG14 for F429
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,7 +113,7 @@ int main(void)
 		if (MyReadButton()) {
 			MyWriteLed(red, 0); //red off
 			MyWriteLed(green, 1); // green on
-			delay(5);
+			HAL_Delay(5000);
 		}
     /* USER CODE END WHILE */
 
