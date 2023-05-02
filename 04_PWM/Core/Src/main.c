@@ -71,6 +71,13 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
 	TIM3->CCR1 = (TIM3->CCR1 != TIM3->ARR) ? TIM3->ARR : brightness;
 }
 
+// Период переполнения таймера SysTick
+int getSysTickDelay() {
+	int callibrate = (SysTick->CTRL & 0b100) ? 1 : 8; // делитель AHB (из лекции)
+	int frequency = HAL_RCC_GetSysClockFreq() / callibrate; // частота системного тактового сигнала
+	int ticks = (SysTick->LOAD + 1); // пороговое значение сброса таймера
+	return ticks * 1000 / frequency;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
