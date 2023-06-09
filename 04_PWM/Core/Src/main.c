@@ -71,6 +71,16 @@ int getSysTickDelay() {
 	int ticks = (SysTick->LOAD + 1); // пороговое значение сброса таймера
 	return ticks * 1000 / frequency;
 }
+
+// Период переполнения таймера 3
+int getTim3Delay() {
+	int callibrate = (SysTick->CTRL & 0b100) ? 1 : 8; // делитель AHB (из лекции)
+	int frequency = HAL_RCC_GetSysClockFreq() / callibrate; // частота системного тактового сигнала
+	frequency /= (TIM3->PSC + 1); // Поделить на прескейлер
+	int ticks = (TIM3->ARR + 1); // пороговое значение сброса таймера
+	return ticks * 1000 / frequency; // 1 мс
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
